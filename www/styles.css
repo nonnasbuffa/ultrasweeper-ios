@@ -1044,8 +1044,20 @@ body.legacy-mode { padding-bottom: calc(30px + env(safe-area-inset-bottom)); }
 
 /* Admin secret: tiles of the board picture react to taps. */
 .board-art span { pointer-events: auto; }
-.board-art span.art-press { animation: art-press .3s var(--ease-spring); }
-@keyframes art-press { 40% { transform: scale(.82); filter: brightness(1.35); } }
+.board-art span { position: relative; cursor: pointer; }
+/* Every tile pulses when tapped; !important beats the menu's entrance/legacy animation rules. */
+.mode-screen .board-art span.art-press { animation: art-pulse .5s var(--ease-out) !important; }
+@keyframes art-pulse {
+  0% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); }
+  35% { transform: scale(1.18); filter: brightness(1.45); box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent); }
+  100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 12px transparent; }
+}
+body.legacy-mode .mode-screen .board-art span.art-press { animation: art-pulse-legacy .45s ease-out !important; }
+@keyframes art-pulse-legacy {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 #ffd27a; }
+  35% { transform: scale(1.14); filter: brightness(1.12); box-shadow: 0 0 0 4px #ffd27acc; }
+  100% { transform: scale(1); box-shadow: 0 0 0 8px transparent; }
+}
 @media (max-width: 600px) {
   .menu-hero { gap: 14px; }
   .menu-hero .board-art { display: grid; flex: none; gap: 4px; width: 92px; }
