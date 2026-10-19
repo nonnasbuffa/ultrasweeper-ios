@@ -1,0 +1,12 @@
+{
+  "appId": "com.offlineminesweeper.app",
+  "appName": "Minesweeper",
+  "webDir": "www",
+  "backgroundColor": "#0b0e15",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  }
+}

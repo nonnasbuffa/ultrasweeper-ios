@@ -1,0 +1,20 @@
+{
+  "name": "offline-minesweeper-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline Minesweeper for Android and iOS (Capacitor wrapper around the desktop game).",
+  "scripts": {
+    "sync-web": "node scripts/sync-web.js",
+    "sync": "npm run sync-web && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
+  }
+}
