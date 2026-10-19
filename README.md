@@ -59,6 +59,6 @@ Xcode → Product → Archive → Distribute App.
 
 - Tap to reveal, long-press to flag, tap a number to clear its neighbours.
 - The board grows to fill the screen unless you resize it yourself with the lock unlocked.
-- Admin secret: there is no keyboard on a phone, so tap the title "Find the safe path." 7 times quickly
-  on the main menu (typing `iwannacheat` still works with a keyboard). The password is still required.
+- Admin secret: tap the logo 3 times (it spins), then within 5 seconds tap the 3rd tile of the 2nd row in the board picture
+  on the main menu. The password is still required.
 - Android back button: closes dialogs and panels, then returns to the menu, then exits.

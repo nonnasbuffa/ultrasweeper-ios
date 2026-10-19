@@ -1373,9 +1373,9 @@ function setUpTouchDevice() {
   document.documentElement.classList.toggle('touch-device', touch);
   if (touch) document.querySelector('.game-hint').textContent = 'Long-press to flag · Tap a number to clear its neighbors';
 
-  // iOS: tap the logo 3 times (it spins), then tap the 3rd tile of the 2nd row in the board picture.
-  const ios = window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios';
-  if (ios) {
+  // Phone apps (iOS and Android): tap the logo 3 times (it spins), then tap the 3rd tile of the 2nd row in the board picture.
+  const phoneApp = window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && ['ios', 'android'].includes(window.Capacitor.getPlatform());
+  if (phoneApp) {
     let logoTaps = 0;
     let lastLogoTap = 0;
     let armedUntil = 0;
