@@ -1373,6 +1373,36 @@ function setUpTouchDevice() {
   document.documentElement.classList.toggle('touch-device', touch);
   if (touch) document.querySelector('.game-hint').textContent = 'Long-press to flag · Tap a number to clear its neighbors';
 
+  // iOS: tap the logo 3 times (it spins), then tap the 3rd tile of the 2nd row in the board picture.
+  const ios = window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios';
+  if (ios) {
+    let logoTaps = 0;
+    let lastLogoTap = 0;
+    let armedUntil = 0;
+    const logos = [document.querySelector('.brand i'), document.querySelector('#mode-screen > .xp-titlebar img')];
+    logos.forEach(logo => logo.addEventListener('click', () => {
+      const now = performance.now();
+      logoTaps = now - lastLogoTap < 600 ? logoTaps + 1 : 1;
+      lastLogoTap = now;
+      if (logoTaps < 3) return;
+      logoTaps = 0;
+      armedUntil = now + 5000;
+      logos.forEach(item => {
+        item.classList.remove('logo-armed');
+        void item.offsetWidth;
+        item.classList.add('logo-armed');
+      });
+    }));
+    document.querySelector('.board-art span:nth-child(7)').addEventListener('click', () => {
+      if (performance.now() > armedUntil || adminState.unlocked || openDialogName) return;
+      armedUntil = 0;
+      document.querySelector('#admin-password').value = '';
+      document.querySelector('#admin-error').textContent = '';
+      openDialog('admin');
+    });
+    return setUpBackButton();
+  }
+
   // Phones have no keyboard for the secret code: tapping the menu title 7 times in a row works too.
   let taps = 0;
   let lastTap = 0;
@@ -1388,6 +1418,10 @@ function setUpTouchDevice() {
     openDialog('admin');
   });
 
+  setUpBackButton();
+}
+
+function setUpBackButton() {
   // Android back button inside the app: step back through the UI instead of quitting straight away.
   const nativeApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
   if (!nativeApp) return;
