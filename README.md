@@ -59,6 +59,5 @@ Xcode → Product → Archive → Distribute App.
 
 - Tap to reveal, long-press to flag, tap a number to clear its neighbours.
 - The board grows to fill the screen unless you resize it yourself with the lock unlocked.
-- Admin secret: tap the logo 3 times (it spins), then within 5 seconds tap the 3rd tile of the 2nd row in the board picture
-  on the main menu. The password is still required.
+- Admin tools are unlocked by a secret on the main menu plus a password (same on every version).
 - Android back button: closes dialogs and panels, then returns to the menu, then exits.

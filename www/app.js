@@ -73,9 +73,10 @@ let arena = loadArena();
 let arenaGesture = null;
 // Admin access lasts until the app is closed.
 const adminState = { unlocked: false, xray: false, shield: false, freeze: false };
-// Typing this on the main menu (no text box needed) opens the admin password prompt.
-const adminCheatCode = 'iwannacheat';
-let typedKeys = '';
+// Tapping the board picture's tiles in this order (row/column, 1-based) opens the admin password prompt.
+const adminTilePattern = [[1, 1], [2, 1], [3, 1], [4, 1], [4, 2], [4, 3], [4, 4], [1, 4], [2, 3], [3, 2]].map(([row, column]) => (row - 1) * 4 + column);
+let patternStep = 0;
+let lastPatternTap = 0;
 let adminPanelDrag = null;
 let stats = loadStats();
 let statsBoard = '9x9x10';
@@ -85,6 +86,7 @@ let arenaFit = Infinity;
 applyLegacyMode();
 applyAccentColor();
 setUpTouchDevice();
+setUpAdminPattern();
 applyArena();
 runLoadingScreen();
 updateClock();
@@ -171,20 +173,6 @@ document.querySelectorAll('[data-close]').forEach(button => button.addEventListe
 Object.values(dialogs).forEach(dialog => dialog.addEventListener('mousedown', event => {
   if (event.target === dialog) closeDialog();
 }));
-document.addEventListener('keydown', event => {
-  if (event.key.length !== 1 || event.ctrlKey || event.altKey || event.metaKey) return;
-  if (currentScreen !== 'mode' || openDialogName || event.target.closest('input, textarea')) {
-    typedKeys = '';
-    return;
-  }
-  typedKeys = (typedKeys + event.key.toLowerCase()).slice(-adminCheatCode.length);
-  if (typedKeys !== adminCheatCode) return;
-  typedKeys = '';
-  if (adminState.unlocked) return;
-  document.querySelector('#admin-password').value = '';
-  document.querySelector('#admin-error').textContent = '';
-  openDialog('admin');
-});
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   if (openDialogName) {
@@ -1373,52 +1361,29 @@ function setUpTouchDevice() {
   document.documentElement.classList.toggle('touch-device', touch);
   if (touch) document.querySelector('.game-hint').textContent = 'Long-press to flag · Tap a number to clear its neighbors';
 
-  // Phone apps (iOS and Android): tap the logo 3 times (it spins), then tap the 3rd tile of the 2nd row in the board picture.
-  const phoneApp = window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && ['ios', 'android'].includes(window.Capacitor.getPlatform());
-  if (phoneApp) {
-    let logoTaps = 0;
-    let lastLogoTap = 0;
-    let armedUntil = 0;
-    const logos = [document.querySelector('.brand i'), document.querySelector('#mode-screen > .xp-titlebar img')];
-    logos.forEach(logo => logo.addEventListener('click', () => {
-      const now = performance.now();
-      logoTaps = now - lastLogoTap < 600 ? logoTaps + 1 : 1;
-      lastLogoTap = now;
-      if (logoTaps < 3) return;
-      logoTaps = 0;
-      armedUntil = now + 5000;
-      logos.forEach(item => {
-        item.classList.remove('logo-armed');
-        void item.offsetWidth;
-        item.classList.add('logo-armed');
-      });
-    }));
-    document.querySelector('.board-art span:nth-child(7)').addEventListener('click', () => {
-      if (performance.now() > armedUntil || adminState.unlocked || openDialogName) return;
-      armedUntil = 0;
-      document.querySelector('#admin-password').value = '';
-      document.querySelector('#admin-error').textContent = '';
-      openDialog('admin');
-    });
-    return setUpBackButton();
-  }
+  setUpBackButton();
+}
 
-  // Phones have no keyboard for the secret code: tapping the menu title 7 times in a row works too.
-  let taps = 0;
-  let lastTap = 0;
-  document.querySelector('#mode-title').addEventListener('click', () => {
+function setUpAdminPattern() {
+  const tiles = [...document.querySelectorAll('.board-art span')];
+  tiles.forEach((tile, index) => tile.addEventListener('pointerdown', () => {
+    const position = index + 1;
     const now = performance.now();
-    taps = now - lastTap < 600 ? taps + 1 : 1;
-    lastTap = now;
-    if (taps < 7) return;
-    taps = 0;
-    if (adminState.unlocked || openDialogName) return;
+    // A pause of more than 3 seconds starts over.
+    if (now - lastPatternTap > 3000) patternStep = 0;
+    lastPatternTap = now;
+    tile.classList.remove('art-press');
+    void tile.offsetWidth;
+    tile.classList.add('art-press');
+    if (position === adminTilePattern[patternStep]) patternStep += 1;
+    else patternStep = position === adminTilePattern[0] ? 1 : 0;
+    if (patternStep < adminTilePattern.length) return;
+    patternStep = 0;
+    if (adminState.unlocked || openDialogName || currentScreen !== 'mode') return;
     document.querySelector('#admin-password').value = '';
     document.querySelector('#admin-error').textContent = '';
     openDialog('admin');
-  });
-
-  setUpBackButton();
+  }));
 }
 
 function setUpBackButton() {

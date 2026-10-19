@@ -1042,7 +1042,14 @@ body.legacy-mode { padding-bottom: calc(30px + env(safe-area-inset-bottom)); }
   body.legacy-mode .xp-task { display: none; }
 }
 
-/* iOS admin secret: the logo spins when armed. */
-#mode-screen > .xp-titlebar img, .board-art span { pointer-events: auto; }
-.logo-armed { animation: logo-armed .9s var(--ease-spring); }
-@keyframes logo-armed { 0% { transform: rotate(0) scale(1); } 40% { transform: rotate(200deg) scale(1.5); filter: drop-shadow(0 0 8px var(--accent)); } 100% { transform: rotate(360deg) scale(1); } }
+/* Admin secret: tiles of the board picture react to taps. */
+.board-art span { pointer-events: auto; }
+.board-art span.art-press { animation: art-press .3s var(--ease-spring); }
+@keyframes art-press { 40% { transform: scale(.82); filter: brightness(1.35); } }
+@media (max-width: 600px) {
+  .menu-hero { gap: 14px; }
+  .menu-hero .board-art { display: grid; flex: none; gap: 4px; width: 92px; }
+  .board-art span { border-radius: 5px; }
+  body.legacy-mode .menu-hero .board-art { width: 84px; }
+  body.legacy-mode .board-art span { border-width: 2px; }
+}
