@@ -1,4 +1,4 @@
-# Offline Minesweeper — Android & iOS
+# UltraSweeper — Android & iOS
 
 This folder wraps the desktop game (`../Offline Minesweeper/resources/app`) into phone apps with
 [Capacitor](https://capacitorjs.com). Both apps run the exact same game code as the Windows exe.
@@ -44,7 +44,7 @@ An iOS app can only be built on a Mac with Xcode, and an iPhone only installs ap
 Apple ID. Steps on a Mac:
 
 1. Install Xcode from the App Store, and Node.js.
-2. Copy `Minesweeper-iOS-project.zip` to the Mac and unzip it (it already contains the game in `www/`).
+2. Copy `UltraSweeper-iOS-project.zip` to the Mac and unzip it (it already contains the game in `www/`).
 3. In the unzipped `Minesweeper-iOS` folder run `npm install` and then `npx cap sync ios`.
 4. Run `npx cap open ios` to open the project in Xcode.
 5. In Xcode select the **App** target → **Signing & Capabilities** → choose your Apple ID team

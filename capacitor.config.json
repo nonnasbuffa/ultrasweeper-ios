@@ -1,6 +1,6 @@
 {
   "appId": "com.offlineminesweeper.app",
-  "appName": "Minesweeper",
+  "appName": "UltraSweeper",
   "webDir": "www",
   "backgroundColor": "#0b0e15",
   "android": {

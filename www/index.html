@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#0b0e15" />
-    <title>Offline Minesweeper</title>
+    <title>UltraSweeper</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="is-loading">
@@ -28,8 +28,8 @@
           <span></span><span class="loading-mine"><img src="assets/mine.svg" alt="" /></span><span></span>
           <span></span><span></span><span></span>
         </div>
-        <p class="loading-title">Minesweeper</p>
-        <div class="xp-boot-logo" aria-hidden="true"><img src="assets/mine.svg" alt="" /><span>Minesweeper<sup>Classic</sup></span></div>
+        <p class="loading-title">UltraSweeper</p>
+        <div class="xp-boot-logo" aria-hidden="true"><img src="assets/mine.svg" alt="" /><span>UltraSweeper<sup>Classic</sup></span></div>
         <div class="loading-bar"><i id="loading-progress"></i></div>
         <p id="loading-text" class="loading-text">Loading assets…</p>
       </div>
@@ -37,9 +37,9 @@
 
     <main class="app-shell">
       <section id="mode-screen" class="screen mode-screen" aria-labelledby="mode-title">
-        <div class="xp-titlebar" aria-hidden="true"><img src="assets/mine.svg" alt="" /><span>Minesweeper</span></div>
+        <div class="xp-titlebar" aria-hidden="true"><img src="assets/mine.svg" alt="" /><span>UltraSweeper</span></div>
         <header class="menu-header">
-          <span class="brand"><i></i>Minesweeper</span>
+          <span class="brand"><i></i>UltraSweeper</span>
           <div class="menu-header-actions">
             <button id="menu-stats" class="legacy-toggle stats-toggle" type="button"><svg class="admin-toggle-icon"><use href="#icon-trophy" /></svg><span>Stats</span></button>
             <button id="admin-toggle" class="legacy-toggle admin-toggle hidden" type="button" aria-pressed="false">
@@ -82,7 +82,7 @@
       </section>
 
       <section id="game-screen" class="screen game-screen hidden">
-        <div class="xp-titlebar"><img src="assets/mine.svg" alt="" /><span>Minesweeper</span><button id="xp-close-game" class="xp-close" type="button" aria-label="Back to games"><svg><use href="#icon-close" /></svg></button></div>
+        <div class="xp-titlebar"><img src="assets/mine.svg" alt="" /><span>UltraSweeper</span><button id="xp-close-game" class="xp-close" type="button" aria-label="Back to games"><svg><use href="#icon-close" /></svg></button></div>
         <header class="game-header">
           <button id="back-to-menu" class="text-button" type="button"><svg class="button-icon"><use href="#icon-arrow-left" /></svg>Games</button>
           <div class="game-actions">
@@ -100,7 +100,7 @@
         </div>
         <p id="game-status" class="game-status" aria-live="polite">Click any tile to start.</p>
         <div id="board-wrap" class="board-wrap">
-          <div id="board" class="board" role="grid" aria-label="Minesweeper board"></div>
+          <div id="board" class="board" role="grid" aria-label="UltraSweeper board"></div>
         </div>
         <p class="game-hint">Right-click or press F to flag · Click a number to clear its neighbors</p>
         <span class="arena-grip" aria-hidden="true"></span>
@@ -109,7 +109,7 @@
     </main>
 
     <footer class="xp-taskbar">
-      <span class="xp-task" aria-hidden="true"><img src="assets/face.svg" alt="" />Minesweeper</span>
+      <span class="xp-task" aria-hidden="true"><img src="assets/face.svg" alt="" />UltraSweeper</span>
       <span class="xp-tray"><time id="xp-clock"></time></span>
     </footer>
 

@@ -1,6 +1,6 @@
-# Builds an unsigned Minesweeper.ipa on a GitHub-hosted Mac.
+# Builds an unsigned UltraSweeper.ipa on a GitHub-hosted Mac.
 # Sign/install it afterwards with your own tool (Sideloadly, ESign, AltStore, ...).
-name: Build iOS IPA
+name: Build UltraSweeper IPA
 
 on:
   workflow_dispatch:
@@ -37,13 +37,13 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
-      - name: Package Minesweeper.ipa
+      - name: Package UltraSweeper.ipa
         run: |
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/App.app Payload/
-          zip -qry Minesweeper.ipa Payload
+          zip -qry UltraSweeper.ipa Payload
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Minesweeper-ipa
-          path: Minesweeper.ipa
+          name: UltraSweeper-ipa
+          path: UltraSweeper.ipa

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Minesweeper</string>
-    <string name="title_activity_main">Minesweeper</string>
+    <string name="app_name">UltraSweeper</string>
+    <string name="title_activity_main">UltraSweeper</string>
     <string name="package_name">com.offlineminesweeper.app</string>
     <string name="custom_url_scheme">com.offlineminesweeper.app</string>
 </resources>
