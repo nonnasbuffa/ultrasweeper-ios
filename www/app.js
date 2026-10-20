@@ -616,8 +616,7 @@ function startGame(width, height, mines) {
     won: false,
     seconds: 0,
     flags: 0,
-    revealedSafe: 0,
-    cheated: adminState.xray || adminState.shield || adminState.freeze
+    revealedSafe: 0
   };
   statusElement.textContent = 'Click any tile to start.';
   statusElement.className = 'game-status';
@@ -834,8 +833,7 @@ function checkWin() {
   const time = elapsedSeconds();
   const record = recordResult(true, time);
   let message = `You cleared the board in ${formatTime(time)}!`;
-  if (game.cheated) message = `Cleared in ${formatTime(time)}, with admin help (not recorded).`;
-  else if (record.rank === 0) message = `New best time: ${formatTime(time)}!`;
+  if (record.rank === 0) message = `New best time: ${formatTime(time)}!`;
   else if (record.rank > 0) message = `Cleared in ${formatTime(time)}, #${record.rank + 1} on the leaderboard!`;
   setStatus(message, 'win');
 }
@@ -1360,13 +1358,8 @@ function endAdminPanelDrag(event) {
   makeRoomForAdminPanel();
 }
 
-function markCheated() {
-  if (game && !game.ended) game.cheated = true;
-}
-
 function setCheat(name, value) {
   adminState[name] = value;
-  if (value) markCheated();
   updateAdminUi();
   if (name === 'xray') refreshGameAppearance();
   const labels = { xray: 'X-ray vision', shield: 'Mine shield', freeze: 'Timer freeze' };
@@ -1377,7 +1370,6 @@ function shieldMine(index) {
   const tile = game.tiles[index];
   tile.flagged = true;
   game.flags += 1;
-  game.cheated = true;
   paintTile(index, tileButtons[index], 'anim-flag');
   tileButtons[index].classList.add('shielded');
   window.setTimeout(() => tileButtons[index] && tileButtons[index].classList.remove('shielded'), 700);
@@ -1402,7 +1394,6 @@ function runAdminAction(action) {
     adminNote.textContent = 'This game is over. Start a new one.';
     return;
   }
-  markCheated();
   if (action === 'time') {
     game.seconds = 0;
     updateHud();
@@ -1492,8 +1483,8 @@ function boardStats(key) {
 }
 
 function recordResult(won, time = 0) {
-  // Only finished, cheat-free games count.
-  if (!game || game.cheated || !game.started) return { rank: -1 };
+  // Every started game counts, including ones played with admin tools (those are for developers only).
+  if (!game || !game.started) return { rank: -1 };
   const entry = boardStats(boardKey(game.width, game.height, game.mines));
   entry.played += 1;
   let rank = -1;

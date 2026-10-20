@@ -880,6 +880,8 @@ body.legacy-mode .tile { font: bold calc(var(--tile, var(--tile-size)) * .62) Ve
 .admin-lock-button small { display: block; margin-top: 2px; color: #c98b8b; font-size: .68rem; font-weight: 600; }
 body.legacy-mode .admin-lock-button small { display: none; }
 .admin-toggle[aria-pressed="true"] { cursor: default; }
+/* Legacy: the admin badge just reads "Admin", without the checkbox. */
+body.legacy-mode .admin-toggle b { display: none; }
 
 .tile .xray-mine { opacity: .4; filter: saturate(.5) drop-shadow(0 0 3px #ff4d5e88); }
 .tile.shielded { animation: shield-pop .7s var(--ease-out); }
