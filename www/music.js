@@ -1,8 +1,10 @@
 // Background music, synthesized live with the Web Audio API so no audio files are needed.
 // Two original tracks: "Clear Signal" for the modern look and "Classic Click" for legacy.
+// Each look can instead play the player's own song: an audio file or a YouTube video.
 window.UltraMusic = (() => {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   const masterVolume = 0.55;
+  const customVolume = 0.6;
   const lookAhead = 0.25;
   let context = null;
   let master = null;
@@ -12,6 +14,13 @@ window.UltraMusic = (() => {
   let trackName = 'modern';
   let playing = null;
   let schedulerId = null;
+  // Custom songs per look: null, { kind: 'file', url } or { kind: 'youtube', id }.
+  const customSongs = { modern: null, legacy: null };
+  let customError = () => {};
+  const audio = new Audio();
+  audio.loop = true;
+  audio.volume = customVolume;
+  let youtube = null;
 
   const frequency = midi => 440 * Math.pow(2, (midi - 69) / 12);
 
@@ -271,8 +280,8 @@ window.UltraMusic = (() => {
     master.gain.linearRampToValueAtTime(target, now + seconds);
   }
 
-  function start() {
-    if (!enabled || document.hidden || !ensureContext()) return;
+  function startSynth() {
+    if (!ensureContext()) return;
     if (context.state !== 'running') context.resume().catch(() => {});
     if (!playing) startTrack();
     fadeMaster(masterVolume, 0.6);
@@ -280,7 +289,7 @@ window.UltraMusic = (() => {
     schedule();
   }
 
-  function stop() {
+  function stopSynth() {
     if (!context) return;
     fadeMaster(0, 0.4);
     window.clearInterval(schedulerId);
@@ -288,19 +297,139 @@ window.UltraMusic = (() => {
     stopTrack(0.4);
   }
 
+  // ---- Custom songs ------------------------------------------------------------
+  function playFile(url) {
+    if (audio.dataset.url !== url) {
+      audio.dataset.url = url;
+      audio.src = url;
+    }
+    audio.play().catch(() => {});
+  }
+
+  function youtubeCommand(func, args = []) {
+    if (youtube && youtube.frame.contentWindow) youtube.frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
+  }
+
+  function removeYoutube() {
+    if (!youtube) return;
+    window.clearTimeout(youtube.timeout);
+    youtube.frame.remove();
+    youtube = null;
+  }
+
+  // Fall back to the built-in tune for now; the song stays saved, so it is tried again next launch.
+  function youtubeFailed(message) {
+    const look = trackName;
+    removeYoutube();
+    customSongs[look] = null;
+    refresh();
+    customError(look, message);
+  }
+
+  function playYoutube(id) {
+    if (youtube && youtube.id === id) {
+      youtube.wanted = true;
+      if (youtube.ready) youtubeCommand('playVideo');
+      return;
+    }
+    removeYoutube();
+    const frame = document.createElement('iframe');
+    frame.className = 'youtube-player';
+    frame.title = 'Background music';
+    frame.allow = 'autoplay; encrypted-media';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.tabIndex = -1;
+    frame.src = `https://www.youtube.com/embed/${id}?enablejsapi=1&autoplay=1&loop=1&playlist=${id}&controls=0&disablekb=1&playsinline=1&rel=0`;
+    youtube = { id, frame, ready: false, wanted: true };
+    // Ask the player to report its events (ready, errors) back to this page.
+    frame.addEventListener('load', () => {
+      if (frame.contentWindow) frame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
+    });
+    youtube.timeout = window.setTimeout(() => {
+      if (youtube && youtube.frame === frame && !youtube.ready) youtubeFailed('YouTube could not be reached. Check your internet connection.');
+    }, 15000);
+    document.body.append(frame);
+  }
+
+  window.addEventListener('message', event => {
+    if (!youtube || event.source !== youtube.frame.contentWindow) return;
+    let data = null;
+    try {
+      data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    } catch {
+      return;
+    }
+    if (!data || !data.event) return;
+    if (data.event === 'onReady' || data.event === 'initialDelivery') {
+      if (youtube.ready) return;
+      youtube.ready = true;
+      window.clearTimeout(youtube.timeout);
+      youtubeCommand('setVolume', [customVolume * 100]);
+      youtubeCommand(youtube.wanted ? 'playVideo' : 'pauseVideo');
+    } else if (data.event === 'onError') {
+      const code = Number(data.info);
+      youtubeFailed(code === 101 || code === 150 || code === 153
+        ? 'This video does not allow playing outside YouTube. Try another one.'
+        : 'This YouTube video could not be played. Try another one.');
+    }
+  });
+
+  function pauseCustom() {
+    audio.pause();
+    if (youtube) {
+      youtube.wanted = false;
+      youtubeCommand('pauseVideo');
+    }
+  }
+
+  // Decide what should be playing right now and make it so.
+  function refresh() {
+    const song = customSongs[trackName];
+    if (!enabled || document.hidden) {
+      pauseCustom();
+      if (context && enabled) context.suspend().catch(() => {});
+      return;
+    }
+    if (!song) {
+      pauseCustom();
+      startSynth();
+      return;
+    }
+    stopSynth();
+    if (song.kind === 'file') {
+      if (youtube) {
+        youtube.wanted = false;
+        youtubeCommand('pauseVideo');
+      }
+      playFile(song.url);
+    } else {
+      audio.pause();
+      playYoutube(song.id);
+    }
+  }
+
   // Browsers and phones only allow sound after the player has touched the app.
   const unlock = () => {
-    if (enabled && context && context.state !== 'running') context.resume().then(schedule).catch(() => {});
-    else if (enabled && !context) start();
+    if (!enabled || document.hidden) return;
+    const song = customSongs[trackName];
+    if (!song) {
+      if (context && context.state !== 'running') context.resume().then(schedule).catch(() => {});
+      else if (!context) startSynth();
+    } else if (song.kind === 'file' && audio.paused) {
+      audio.play().catch(() => {});
+    }
   };
   ['pointerdown', 'keydown', 'touchend'].forEach(type => window.addEventListener(type, unlock, { capture: true, passive: true }));
 
   // Go quiet while the app is in the background ('pause'/'resume' come from the phone apps).
   const pause = () => {
+    pauseCustom();
     if (context && enabled) context.suspend().catch(() => {});
   };
   const resume = () => {
-    if (context && enabled && !document.hidden) context.resume().then(schedule).catch(() => {});
+    if (!enabled || document.hidden) return;
+    if (context) context.resume().then(schedule).catch(() => {});
+    refresh();
   };
   document.addEventListener('visibilitychange', () => (document.hidden ? pause() : resume()));
   document.addEventListener('pause', pause);
@@ -315,20 +444,41 @@ window.UltraMusic = (() => {
       return Math.sqrt(samples.reduce((sum, value) => sum + value * value, 0) / samples.length);
     },
     get state() {
-      return { enabled, track: trackName, context: context ? context.state : 'none' };
+      return {
+        enabled,
+        track: trackName,
+        context: context ? context.state : 'none',
+        synth: Boolean(playing),
+        file: !audio.paused,
+        youtube: youtube ? { id: youtube.id, ready: youtube.ready, wanted: youtube.wanted } : null
+      };
     },
     setEnabled(value) {
       enabled = value;
-      if (enabled) start();
-      else stop();
+      if (!enabled) stopSynth();
+      refresh();
     },
     setTrack(name) {
       if (!tracks[name] || name === trackName) return;
       trackName = name;
-      if (!enabled || !context) return;
-      stopTrack(0.8);
-      startTrack();
-      schedule();
+      if (!enabled) return;
+      // Cross-fade between the two built-in tunes.
+      if (playing && !customSongs[name]) {
+        stopTrack(0.8);
+        startTrack();
+        schedule();
+      }
+      refresh();
+    },
+    // song: null for the built-in tune, { kind: 'file', url } or { kind: 'youtube', id }.
+    setCustomSong(look, song) {
+      customSongs[look] = song;
+      if (look !== trackName) return;
+      if (!song || song.kind !== 'youtube' || (youtube && youtube.id !== song.id)) removeYoutube();
+      if (enabled) refresh();
+    },
+    onCustomError(callback) {
+      customError = callback;
     }
   };
 })();

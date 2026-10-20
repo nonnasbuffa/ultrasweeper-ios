@@ -872,6 +872,9 @@ body.legacy-mode .tile { font: bold calc(var(--tile, var(--tile-size)) * .62) Ve
 .admin-note { min-height: 1.3em; margin: 10px 2px 6px; color: #f0c46a; font-size: .78rem; }
 .admin-lock-button { width: 100%; padding: 8px; border: 1px solid #5a2a2f; border-radius: 10px; background: transparent; color: #ff9d9d; font-size: .8rem; font-weight: 700; transition: background .2s ease; }
 .admin-lock-button:hover { background: #3a1d22; }
+.admin-lock-button small { display: block; margin-top: 2px; color: #c98b8b; font-size: .68rem; font-weight: 600; }
+body.legacy-mode .admin-lock-button small { display: none; }
+.admin-toggle[aria-pressed="true"] { cursor: default; }
 
 .tile .xray-mine { opacity: .4; filter: saturate(.5) drop-shadow(0 0 3px #ff4d5e88); }
 .tile.shielded { animation: shield-pop .7s var(--ease-out); }
@@ -950,7 +953,29 @@ body.legacy-mode .music-toggle .admin-toggle-icon { color: #1b5fc1; }
 body.legacy-mode .music-toggle[aria-pressed="false"] .admin-toggle-icon { color: #777; }
 .game-screen .game-header .music-button .button-icon { display: block; }
 .legacy-toggle, .offline-badge { white-space: nowrap; }
-@media (max-width: 680px) { .menu-header-actions .offline-badge { display: none; } }
+
+/* Custom song picker (Appearance) */
+.song-picker { display: grid; gap: 10px; margin: 0 0 16px; padding: 15px; border: 1px solid #303a4b; border-radius: 13px; background: #151b24; }
+.song-heading { display: flex; align-items: center; gap: 12px; }
+.song-icon { width: 26px; height: 26px; flex: none; color: #8fd0ff; }
+.song-link-row, .song-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.song-link { flex: 1 1 180px; min-width: 0; padding: 8px 10px; font-size: .86rem; }
+.song-error { min-height: 0; margin: 0; }
+.song-error:empty { display: none; }
+.song-error.ok { color: #79e8ad; }
+.youtube-player { position: fixed; right: 0; bottom: 0; z-index: -1; width: 200px; height: 200px; border: 0; opacity: 0; pointer-events: none; }
+body.legacy-mode .song-picker { gap: 6px; margin-block: 0 10px; padding: 8px 10px; border: 1px solid #d0d0bf; border-radius: 4px; background: #fff; }
+body.legacy-mode .song-icon { width: 22px; height: 22px; color: #1b5fc1; }
+body.legacy-mode .song-link { padding: 3px 5px; border: 1px solid #7f9db9; border-radius: 0; background: #fff; color: #000; font: 12px Tahoma, sans-serif; }
+body.legacy-mode .song-link:focus { outline: 0; }
+body.legacy-mode .song-error { font-size: 11px; }
+body.legacy-mode .song-error.ok { color: #1d7a1d; }
+@media (max-width: 900px) { .menu-header-actions .offline-badge { display: none; } }
+/* Tablets: center the menu in the screen instead of leaving it at the top. */
+@media (pointer: coarse) and (min-width: 601px) {
+  body:not(.legacy-mode) .app-shell:has(> .mode-screen:not(.hidden)) { display: flex; flex-direction: column; justify-content: center; min-height: calc(var(--screen-height) - var(--safe-top) - var(--safe-bottom)); }
+  body:not(.legacy-mode) .mode-screen { width: 100%; margin-block: 0; }
+}
 .stats-title-icon { color: #f0c46a; }
 .stats-card { width: min(100%, 560px); }
 .stats-boards { display: flex; gap: 8px; margin: 18px 0 14px; padding-bottom: 4px; overflow-x: auto; }
@@ -1025,11 +1050,36 @@ body.legacy-mode .stats-footer .secondary-button[data-confirm] { font-weight: bo
 /* ==========================================================================
    Phones and tablets
    ========================================================================== */
-body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+/* Screen areas taken by the notch / Dynamic Island / home bar, as variables so the layout can work around them. */
+:root { --safe-top: env(safe-area-inset-top, 0px); --safe-right: env(safe-area-inset-right, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-left: env(safe-area-inset-left, 0px); --screen-height: 100vh; }
+@supports (height: 100dvh) { :root { --screen-height: 100dvh; } }
+body { padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
 html, body { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
 .game-screen.unlocked .arena { touch-action: none; }
-body.legacy-mode .xp-taskbar { height: calc(30px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); }
-body.legacy-mode { padding-bottom: calc(30px + env(safe-area-inset-bottom)); }
+body.legacy-mode .xp-taskbar { height: calc(30px + var(--safe-bottom)); padding-bottom: var(--safe-bottom); }
+body.legacy-mode { padding-bottom: calc(30px + var(--safe-bottom)); }
+.safe-probe { position: fixed; top: 0; left: 0; width: 0; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); visibility: hidden; pointer-events: none; }
+/* Phones: the menu fills exactly the visible screen. Spacing and card heights follow the screen height,
+   so tall phones get roomier cards and short ones tighter gaps, with nothing to scroll. */
+@media (max-width: 600px) {
+  body:not(.legacy-mode) .app-shell { display: flex; flex-direction: column; height: calc(var(--screen-height) - var(--safe-top) - var(--safe-bottom)); padding-block: 12px; }
+  body:not(.legacy-mode) .mode-screen { display: flex; flex: 1 1 auto; flex-direction: column; width: 100%; min-height: 0; margin: 0; padding: clamp(14px, 2.6dvh, 22px) 18px; }
+  body:not(.legacy-mode) .menu-hero { flex: 1 1 auto; min-height: auto; padding: clamp(10px, 3dvh, 44px) 3px clamp(10px, 2.6dvh, 30px); }
+  body:not(.legacy-mode) .menu-hero h1 { margin-bottom: clamp(6px, 1.4dvh, 14px); }
+  body:not(.legacy-mode) .mode-actions { flex: 0 1 auto; grid-auto-rows: 1fr; gap: clamp(8px, 1.4dvh, 13px); }
+  body:not(.legacy-mode) .mode-card { min-height: clamp(104px, 16.5dvh, 178px); padding: clamp(14px, 2.2dvh, 20px) 20px; }
+  body:not(.legacy-mode) .mode-card-title { margin-top: clamp(6px, 2.4dvh, 27px); }
+  body:not(.legacy-mode) .mode-card { display: flex; flex-direction: column; }
+  body:not(.legacy-mode) .mode-details { position: relative; inset: auto; margin-top: auto; padding-top: 8px; }  body.legacy-mode .app-shell { padding-top: clamp(10px, 2dvh, 20px); }
+  body.legacy-mode .mode-screen { margin-top: 0; }
+}
+/* Short phones (iPhone SE and similar): drop the small eyebrow line and let the headline follow the screen height. */
+@media (max-width: 600px) and (max-height: 760px) {
+  body:not(.legacy-mode) .menu-hero .eyebrow { display: none; }
+  body:not(.legacy-mode) .menu-hero h1 { font-size: clamp(2.3rem, 6.4dvh, 3rem); }
+  body:not(.legacy-mode) .menu-hero .intro { font-size: .92rem; line-height: 1.45; }
+  body:not(.legacy-mode) .menu-header-actions { gap: 6px; }
+}
 .touch-device .tile:hover:not(.revealed) { filter: none; transform: none; }
 @media (max-width: 520px) {
   .game-screen .game-header { gap: 2px; }

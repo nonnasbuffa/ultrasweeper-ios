@@ -25,6 +25,11 @@ const legacyToggle = document.querySelector('#legacy-toggle');
 const musicStorageKey = 'offline-minesweeper-music-v1';
 const musicToggle = document.querySelector('#music-toggle');
 const gameMusicButton = document.querySelector('#game-music');
+const songStorageKey = 'offline-minesweeper-songs-v1';
+const songLooks = ['modern', 'legacy'];
+const builtInSongNames = { modern: 'Clear Signal', legacy: 'Classic Click' };
+const maxSongBytes = 40 * 1024 * 1024;
+const songErrors = {};
 const arenaElement = document.querySelector('#game-screen');
 // In the modern look only the play area moves; in legacy the whole window does.
 const arenaBox = document.querySelector('#arena');
@@ -66,6 +71,7 @@ let assets = loadAssets();
 let legacyMode = storageGet(legacyStorageKey) === 'true';
 let accentColor = storageGet(accentStorageKey) || defaultAccent;
 let musicOn = storageGet(musicStorageKey) !== 'false';
+let songInfo = loadSongInfo();
 let game = null;
 let timerId = null;
 let currentScreen = 'mode';
@@ -75,8 +81,9 @@ let tileButtons = [];
 let longPress = null;
 let arena = loadArena();
 let arenaGesture = null;
-// Admin access lasts until the app is closed.
-const adminState = { unlocked: false, xray: false, shield: false, freeze: false };
+// Admin access is remembered on this device until "Lock admin" is pressed in the admin panel.
+const adminStorageKey = 'offline-minesweeper-admin-v1';
+const adminState = { unlocked: storageGet(adminStorageKey) === 'unlocked', xray: false, shield: false, freeze: false };
 // Tapping the board picture's tiles in this order (row/column, 1-based) opens the admin password prompt.
 const adminTilePattern = [[1, 1], [2, 1], [3, 1], [4, 1], [4, 2], [4, 3], [4, 4], [1, 4], [2, 3], [3, 2]].map(([row, column]) => (row - 1) * 4 + column);
 let patternStep = 0;
@@ -89,9 +96,11 @@ let arenaFit = Infinity;
 
 applyLegacyMode();
 applyAccentColor();
+loadCustomSongs();
 applyMusic();
 setUpTouchDevice();
 setUpAdminPattern();
+updateAdminUi();
 applyArena();
 runLoadingScreen();
 updateClock();
@@ -125,6 +134,7 @@ window.addEventListener('resize', () => {
 faceButton.addEventListener('click', restartGame);
 document.querySelector('#open-settings').addEventListener('click', () => {
   renderAssets();
+  renderSongPicker();
   openDialog('settings');
 });
 document.querySelector('#restore-assets').addEventListener('click', () => {
@@ -135,6 +145,20 @@ document.querySelector('#restore-assets').addEventListener('click', () => {
 });
 legacyToggle.addEventListener('click', () => setLegacyMode(!legacyMode));
 musicToggle.addEventListener('click', () => setMusic(!musicOn));
+document.querySelector('#song-link-use').addEventListener('click', useSongLink);
+document.querySelector('#song-link').addEventListener('keydown', event => {
+  if (event.key === 'Enter') useSongLink();
+});
+document.querySelector('#song-file-pick').addEventListener('click', () => document.querySelector('#song-file').click());
+document.querySelector('#song-file').addEventListener('change', event => {
+  useSongFile(event.target.files[0]);
+  event.target.value = '';
+});
+document.querySelector('#song-reset').addEventListener('click', resetSong);
+window.UltraMusic.onCustomError((look, message) => {
+  songErrors[look] = `${message} Playing the built-in tune for now.`;
+  if (openDialogName === 'settings' && look === currentLook()) renderSongPicker();
+});
 gameMusicButton.addEventListener('click', () => setMusic(!musicOn));
 accentInput.addEventListener('input', () => {
   accentColor = accentInput.value;
@@ -147,10 +171,8 @@ document.querySelector('#reset-accent').addEventListener('click', () => {
   applyAccentColor();
 });
 adminToggle.addEventListener('click', () => {
-  if (adminState.unlocked) {
-    lockAdmin();
-    return;
-  }
+  // Once unlocked this is just a status badge; locking again is done from the in-game admin panel.
+  if (adminState.unlocked) return;
   document.querySelector('#admin-password').value = '';
   document.querySelector('#admin-error').textContent = '';
   openDialog('admin');
@@ -433,10 +455,23 @@ function fitArenaToWindow() {
   const wrapStyle = getComputedStyle(boardElement.parentElement);
   const wrapChrome = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth'].reduce((sum, key) => sum + parseFloat(wrapStyle[key]), 0);
   const availableWidth = document.documentElement.clientWidth - (legacyMode ? 52 : 64) - wrapChrome;
-  const availableHeight = window.innerHeight - (legacyMode ? 86 : 64) - (rect.height - boardRect.height);
+  const safe = safeArea();
+  const availableHeight = window.innerHeight - safe.top - safe.bottom - (legacyMode ? 86 : 64) - (rect.height - boardRect.height);
   const fit = scale * Math.min(availableWidth / boardRect.width, availableHeight / boardRect.height);
   arenaFit = Math.max(0.5, fit);
   applyArena();
+}
+
+// Height of the screen areas the phone reserves (notch, Dynamic Island, home bar); zero on PC.
+function safeArea() {
+  let probe = document.querySelector('.safe-probe');
+  if (!probe) {
+    probe = document.createElement('div');
+    probe.className = 'safe-probe';
+    document.body.append(probe);
+  }
+  const style = getComputedStyle(probe);
+  return { top: parseFloat(style.paddingTop) || 0, bottom: parseFloat(style.paddingBottom) || 0 };
 }
 
 function keepArenaOnScreen(save = true) {
@@ -446,7 +481,7 @@ function keepArenaOnScreen(save = true) {
   // Leave room for the modern dashed frame and resize grip around the arena.
   const pad = legacyMode ? 0 : 20;
   const viewRight = document.documentElement.clientWidth - pad;
-  const viewBottom = window.innerHeight - (legacyMode ? 30 : pad);
+  const viewBottom = window.innerHeight - safeArea().bottom - (legacyMode ? 30 : pad);
   // Only ever undo the player's own offset, so default layouts are never pushed around.
   if (rect.right > viewRight && arena.x > 0) arena.x -= Math.min(arena.x, rect.right - viewRight);
   if (rect.left < pad && arena.x < 0) arena.x += Math.min(-arena.x, pad - rect.left);
@@ -936,6 +971,136 @@ function setMusic(value) {
   applyMusic();
 }
 
+// ---- Custom songs: one per look. Files live in IndexedDB (too big for localStorage), the rest in localStorage.
+function currentLook() {
+  return legacyMode ? 'legacy' : 'modern';
+}
+
+function loadSongInfo() {
+  try {
+    return JSON.parse(localStorage.getItem(songStorageKey)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSongInfo() {
+  storageSet(songStorageKey, JSON.stringify(songInfo));
+}
+
+function songStore(mode, action) {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('no storage'));
+      return;
+    }
+    const request = indexedDB.open('ultrasweeper-songs', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('songs');
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction('songs', mode);
+      const result = action(transaction.objectStore('songs'));
+      transaction.oncomplete = () => {
+        db.close();
+        resolve(result.result);
+      };
+      transaction.onerror = transaction.onabort = () => {
+        db.close();
+        reject(transaction.error);
+      };
+    };
+  });
+}
+
+function youtubeId(link) {
+  const match = String(link).trim().match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
+// Hand the saved songs to the music player.
+function loadCustomSongs() {
+  songLooks.forEach(look => {
+    const info = songInfo[look];
+    if (!info) return;
+    if (info.kind === 'youtube') {
+      window.UltraMusic.setCustomSong(look, { kind: 'youtube', id: info.id });
+      return;
+    }
+    songStore('readonly', store => store.get(look))
+      .then(file => {
+        if (file && songInfo[look] && songInfo[look].kind === 'file') {
+          window.UltraMusic.setCustomSong(look, { kind: 'file', url: URL.createObjectURL(file) });
+        }
+      })
+      .catch(() => {});
+  });
+}
+
+function renderSongPicker(message = '', ok = false) {
+  const look = currentLook();
+  const info = songInfo[look];
+  document.querySelector('#song-title').textContent = look === 'legacy' ? 'Song (legacy)' : 'Song';
+  const current = document.querySelector('#song-current');
+  if (!info) current.textContent = `Built-in tune: ${builtInSongNames[look]}`;
+  else if (info.kind === 'file') current.textContent = `Your file: ${info.name}`;
+  else current.textContent = 'YouTube video (needs an internet connection)';
+  document.querySelector('#song-link').value = info && info.kind === 'youtube' ? info.url : '';
+  document.querySelector('#song-reset').disabled = !info;
+  const error = document.querySelector('#song-error');
+  error.textContent = message || songErrors[look] || '';
+  error.classList.toggle('ok', ok);
+}
+
+function useSongLink() {
+  const look = currentLook();
+  const link = document.querySelector('#song-link').value;
+  const id = youtubeId(link);
+  if (!id) {
+    renderSongPicker('That doesn\'t look like a YouTube link. Copy it from the Share button on YouTube.');
+    return;
+  }
+  delete songErrors[look];
+  songStore('readwrite', store => store.delete(look)).catch(() => {});
+  songInfo[look] = { kind: 'youtube', id, url: link.trim() };
+  saveSongInfo();
+  window.UltraMusic.setCustomSong(look, { kind: 'youtube', id });
+  renderSongPicker(musicOn ? 'Playing your YouTube song.' : 'Saved. Turn music on to hear it.', true);
+}
+
+function useSongFile(file) {
+  if (!file) return;
+  const look = currentLook();
+  const isAudio = (file.type && file.type.startsWith('audio/')) || /\.(mp3|m4a|aac|wav|ogg|oga|flac|opus)$/i.test(file.name);
+  if (!isAudio) {
+    renderSongPicker('Please choose an audio file, like an MP3.');
+    return;
+  }
+  if (file.size > maxSongBytes) {
+    renderSongPicker('That file is too big. Choose a song under 40 MB.');
+    return;
+  }
+  songStore('readwrite', store => store.put(file, look))
+    .then(() => {
+      delete songErrors[look];
+      songInfo[look] = { kind: 'file', name: file.name };
+      saveSongInfo();
+      window.UltraMusic.setCustomSong(look, { kind: 'file', url: URL.createObjectURL(file) });
+      renderSongPicker(musicOn ? 'Playing your song.' : 'Saved. Turn music on to hear it.', true);
+    })
+    .catch(() => renderSongPicker('The song could not be saved on this device.'));
+}
+
+function resetSong() {
+  const look = currentLook();
+  delete songInfo[look];
+  delete songErrors[look];
+  saveSongInfo();
+  songStore('readwrite', store => store.delete(look)).catch(() => {});
+  window.UltraMusic.setCustomSong(look, null);
+  renderSongPicker();
+}
+
 function applyMusic() {
   musicToggle.setAttribute('aria-pressed', String(musicOn));
   musicToggle.querySelector('b').textContent = musicOn ? 'On' : 'Off';
@@ -1010,12 +1175,14 @@ async function unlockAdmin(event) {
   input.value = '';
   error.textContent = '';
   adminState.unlocked = true;
+  storageSet(adminStorageKey, 'unlocked');
   closeDialog();
   updateAdminUi();
 }
 
 function lockAdmin() {
   adminState.unlocked = false;
+  storageRemove(adminStorageKey);
   adminState.xray = false;
   adminState.shield = false;
   adminState.freeze = false;
@@ -1027,7 +1194,7 @@ function lockAdmin() {
 function updateAdminUi() {
   adminToggle.setAttribute('aria-pressed', String(adminState.unlocked));
   adminToggle.querySelector('b').textContent = adminState.unlocked ? 'Unlocked' : 'Locked';
-  // The menu button only exists while admin is unlocked (clicking it locks again).
+  // The menu badge only exists while admin is unlocked.
   adminToggle.classList.toggle('hidden', !adminState.unlocked);
   adminToolsButton.classList.toggle('hidden', !adminState.unlocked);
   adminPanel.querySelectorAll('[data-cheat]').forEach(button => {
