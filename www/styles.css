@@ -944,6 +944,13 @@ body.legacy-mode .admin-panel-titlebar { cursor: move; }
    Leaderboard
    ========================================================================== */
 .stats-toggle .admin-toggle-icon { color: #f0c46a; }
+.music-toggle .admin-toggle-icon { color: #8fd0ff; }
+.music-toggle[aria-pressed="false"] .admin-toggle-icon, .music-button[aria-pressed="false"] { color: #7d8898; }
+body.legacy-mode .music-toggle .admin-toggle-icon { color: #1b5fc1; }
+body.legacy-mode .music-toggle[aria-pressed="false"] .admin-toggle-icon { color: #777; }
+.game-screen .game-header .music-button .button-icon { display: block; }
+.legacy-toggle, .offline-badge { white-space: nowrap; }
+@media (max-width: 680px) { .menu-header-actions .offline-badge { display: none; } }
 .stats-title-icon { color: #f0c46a; }
 .stats-card { width: min(100%, 560px); }
 .stats-boards { display: flex; gap: 8px; margin: 18px 0 14px; padding-bottom: 4px; overflow-x: auto; }

@@ -18,6 +18,8 @@
       <symbol id="icon-hammer" viewBox="0 0 24 24"><path d="M9.2 4.6 12 1.8l6.4 6.4-2.8 2.8z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M12.6 8.6 3.9 17.3a1.7 1.7 0 0 0 2.4 2.4l8.7-8.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /><path d="M14 21.2h7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 2.8 19.5 6v5.6c0 4.6-3.2 8.2-7.5 9.6-4.3-1.4-7.5-5-7.5-9.6V6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /><path d="M12 8.2v4.4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /><circle cx="12" cy="15.8" r="1.3" fill="currentColor" /></symbol>
       <symbol id="icon-trophy" viewBox="0 0 24 24"><path d="M7 3.5h10v5.2a5 5 0 0 1-10 0z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /><path d="M7 5.5H3.8v1.2A3.3 3.3 0 0 0 7.1 10M17 5.5h3.2v1.2a3.3 3.3 0 0 1-3.3 3.3M12 13.7v3.6M8 20.5h8M9.5 17.3h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+      <symbol id="icon-music" viewBox="0 0 24 24"><path d="M9 17.5V5.2l11-2.2v12.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /><circle cx="6.4" cy="17.8" r="2.7" fill="currentColor" /><circle cx="17.4" cy="15.6" r="2.7" fill="currentColor" /></symbol>
+      <symbol id="icon-music-off" viewBox="0 0 24 24"><path d="M9 17.5V5.2l11-2.2v12.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45" /><circle cx="6.4" cy="17.8" r="2.7" fill="currentColor" opacity=".45" /><circle cx="17.4" cy="15.6" r="2.7" fill="currentColor" opacity=".45" /><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></symbol>
       <symbol id="icon-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 2-2 0-1.4-1.2-1.6-1.2-2.8 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><circle cx="7.5" cy="11" r="1.4" fill="currentColor" /><circle cx="10" cy="7" r="1.4" fill="currentColor" /><circle cx="15" cy="7" r="1.4" fill="currentColor" /></symbol>
     </svg>
 
@@ -44,6 +46,9 @@
             <button id="menu-stats" class="legacy-toggle stats-toggle" type="button"><svg class="admin-toggle-icon"><use href="#icon-trophy" /></svg><span>Stats</span></button>
             <button id="admin-toggle" class="legacy-toggle admin-toggle hidden" type="button" aria-pressed="false">
               <svg class="admin-toggle-icon"><use href="#icon-shield" /></svg><span>Admin</span><b>Locked</b>
+            </button>
+            <button id="music-toggle" class="legacy-toggle music-toggle" type="button" aria-pressed="true">
+              <svg class="admin-toggle-icon"><use href="#icon-music" /></svg><span>Music</span><b>On</b>
             </button>
             <button id="legacy-toggle" class="legacy-toggle" type="button" aria-pressed="false">
               <span>Legacy mode</span><b>Off</b>
@@ -87,6 +92,7 @@
           <button id="back-to-menu" class="text-button" type="button"><svg class="button-icon"><use href="#icon-arrow-left" /></svg>Games</button>
           <div class="game-actions">
             <button id="open-admin" class="text-button admin-tools-button hidden" type="button" aria-haspopup="dialog" aria-expanded="false" title="Admin tools"><svg class="button-icon"><use href="#icon-hammer" /></svg>Admin</button>
+            <button id="game-music" class="text-button music-button" type="button" aria-pressed="true" aria-label="Music" title="Music on"><svg class="button-icon"><use href="#icon-music" /></svg></button>
             <button id="open-stats" class="text-button" type="button"><svg class="button-icon"><use href="#icon-trophy" /></svg>Stats</button>
             <button id="open-settings" class="text-button" type="button"><svg class="button-icon"><use href="#icon-palette" /></svg>Appearance</button>
           </div>
@@ -205,6 +211,7 @@
         <button id="restore-assets" class="secondary-button" type="button">Restore default assets</button>
       </div>
     </section>
+    <script src="music.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

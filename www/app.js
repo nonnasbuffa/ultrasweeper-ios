@@ -22,6 +22,9 @@ const legacyStorageKey = 'offline-minesweeper-legacy-mode-v1';
 const accentStorageKey = 'offline-minesweeper-accent-v1';
 const arenaStorageKey = 'offline-minesweeper-arena-v1';
 const legacyToggle = document.querySelector('#legacy-toggle');
+const musicStorageKey = 'offline-minesweeper-music-v1';
+const musicToggle = document.querySelector('#music-toggle');
+const gameMusicButton = document.querySelector('#game-music');
 const arenaElement = document.querySelector('#game-screen');
 // In the modern look only the play area moves; in legacy the whole window does.
 const arenaBox = document.querySelector('#arena');
@@ -62,6 +65,7 @@ const defaults = {
 let assets = loadAssets();
 let legacyMode = storageGet(legacyStorageKey) === 'true';
 let accentColor = storageGet(accentStorageKey) || defaultAccent;
+let musicOn = storageGet(musicStorageKey) !== 'false';
 let game = null;
 let timerId = null;
 let currentScreen = 'mode';
@@ -85,6 +89,7 @@ let arenaFit = Infinity;
 
 applyLegacyMode();
 applyAccentColor();
+applyMusic();
 setUpTouchDevice();
 setUpAdminPattern();
 applyArena();
@@ -129,6 +134,8 @@ document.querySelector('#restore-assets').addEventListener('click', () => {
   refreshGameAppearance();
 });
 legacyToggle.addEventListener('click', () => setLegacyMode(!legacyMode));
+musicToggle.addEventListener('click', () => setMusic(!musicOn));
+gameMusicButton.addEventListener('click', () => setMusic(!musicOn));
 accentInput.addEventListener('input', () => {
   accentColor = accentInput.value;
   storageSet(accentStorageKey, accentColor);
@@ -920,6 +927,22 @@ function applyLegacyMode() {
   document.body.classList.toggle('legacy-mode', legacyMode);
   legacyToggle.setAttribute('aria-pressed', String(legacyMode));
   legacyToggle.querySelector('b').textContent = legacyMode ? 'On' : 'Off';
+  window.UltraMusic.setTrack(legacyMode ? 'legacy' : 'modern');
+}
+
+function setMusic(value) {
+  musicOn = value;
+  storageSet(musicStorageKey, String(musicOn));
+  applyMusic();
+}
+
+function applyMusic() {
+  musicToggle.setAttribute('aria-pressed', String(musicOn));
+  musicToggle.querySelector('b').textContent = musicOn ? 'On' : 'Off';
+  gameMusicButton.setAttribute('aria-pressed', String(musicOn));
+  gameMusicButton.title = musicOn ? 'Music on' : 'Music off';
+  [musicToggle, gameMusicButton].forEach(button => button.querySelector('use').setAttribute('href', musicOn ? '#icon-music' : '#icon-music-off'));
+  window.UltraMusic.setEnabled(musicOn);
 }
 
 function applyAccentColor() {
