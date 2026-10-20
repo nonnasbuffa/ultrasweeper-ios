@@ -48,6 +48,8 @@ const leaderboardSize = 10;
 const namedBoards = { '9x9x10': 'Beginner', '16x16x40': 'Intermediate', '30x16x99': 'Expert' };
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const longPressDelay = 420;
+// How close (in pixels) the game window must get to the centre before it snaps there.
+const snapDistance = 12;
 
 const assetDefinitions = [
   { id: 'face', name: 'Smiley face', hint: 'Default and in-progress face' },
@@ -141,6 +143,8 @@ document.querySelector('#restore-assets').addEventListener('click', () => {
   assets = {};
   saveAssets();
   renderAssets();
+  // Also brings back the built-in tune for the current look.
+  resetSong();
   refreshGameAppearance();
 });
 legacyToggle.addEventListener('click', () => setLegacyMode(!legacyMode));
@@ -154,7 +158,6 @@ document.querySelector('#song-file').addEventListener('change', event => {
   useSongFile(event.target.files[0]);
   event.target.value = '';
 });
-document.querySelector('#song-reset').addEventListener('click', resetSong);
 window.UltraMusic.onCustomError((look, message) => {
   songErrors[look] = `${message} Playing the built-in tune for now.`;
   if (openDialogName === 'settings' && look === currentLook()) renderSongPicker();
@@ -429,8 +432,67 @@ function moveArenaGesture(event) {
     arena.x = arenaGesture.x + dx;
     arena.y = arenaGesture.y + dy;
     applyArena();
+    snapArenaToCenter();
     keepArenaOnScreen(false);
   }
+}
+
+// The space the game window may move in: below the button bar (modern) or above the taskbar (legacy).
+function arenaBounds() {
+  const safe = safeArea();
+  // Leave room for the modern dashed frame and resize grip around the arena.
+  const pad = legacyMode ? 0 : 20;
+  const width = document.documentElement.clientWidth;
+  const top = legacyMode ? Math.max(pad, safe.top) : document.querySelector('.game-header').getBoundingClientRect().bottom + 16;
+  const bottom = window.innerHeight - safe.bottom - (legacyMode ? 30 : pad);
+  return { left: pad, right: width - pad, top, bottom };
+}
+
+// The centre of that space, where the game window snaps to.
+function centerArea() {
+  const bounds = arenaBounds();
+  return { x: (bounds.left + bounds.right) / 2, y: (bounds.top + bounds.bottom) / 2, top: bounds.top, bottom: bounds.bottom };
+}
+
+// Like the smart guides in PowerPoint: near the exact centre, the window clicks into place and a guide line shows.
+function snapArenaToCenter() {
+  const rect = movableArena().getBoundingClientRect();
+  const area = centerArea();
+  const offsetX = area.x - (rect.left + rect.width / 2);
+  const offsetY = area.y - (rect.top + rect.height / 2);
+  const snapX = Math.abs(offsetX) <= snapDistance;
+  const snapY = Math.abs(offsetY) <= snapDistance;
+  if (snapX) arena.x += offsetX;
+  if (snapY) arena.y += offsetY;
+  if (snapX || snapY) applyArena();
+  if ((snapX && !arenaGesture.snapX) || (snapY && !arenaGesture.snapY)) {
+    // A tiny buzz on phones that support it, so the snap can be felt.
+    if (navigator.vibrate && document.documentElement.classList.contains('touch-device')) navigator.vibrate(8);
+  }
+  arenaGesture.snapX = snapX;
+  arenaGesture.snapY = snapY;
+  showSnapGuides(snapX, snapY, area);
+}
+
+function showSnapGuides(vertical, horizontal, area) {
+  const guides = snapGuides();
+  guides.vertical.classList.toggle('visible', vertical);
+  guides.horizontal.classList.toggle('visible', horizontal);
+  if (vertical) Object.assign(guides.vertical.style, { left: `${area.x}px`, top: `${area.top}px`, height: `${area.bottom - area.top}px` });
+  if (horizontal) guides.horizontal.style.top = `${area.y}px`;
+}
+
+function snapGuides() {
+  let vertical = document.querySelector('.snap-guide.vertical');
+  let horizontal = document.querySelector('.snap-guide.horizontal');
+  if (!vertical) {
+    vertical = document.createElement('div');
+    vertical.className = 'snap-guide vertical';
+    horizontal = document.createElement('div');
+    horizontal.className = 'snap-guide horizontal';
+    document.body.append(vertical, horizontal);
+  }
+  return { vertical, horizontal };
 }
 
 function endArenaGesture(event) {
@@ -440,6 +502,7 @@ function endArenaGesture(event) {
   window.removeEventListener('pointerup', endArenaGesture);
   window.removeEventListener('pointercancel', endArenaGesture);
   arenaElement.classList.remove('dragging', 'resizing');
+  showSnapGuides(false, false);
   keepArenaOnScreen();
 }
 
@@ -478,17 +541,13 @@ function keepArenaOnScreen(save = true) {
   if (!arenaGesture) fitArenaToWindow();
   const rect = movableArena().getBoundingClientRect();
   if (!rect.width) return;
-  // Leave room for the modern dashed frame and resize grip around the arena.
-  const pad = legacyMode ? 0 : 20;
-  const viewRight = document.documentElement.clientWidth - pad;
-  const viewBottom = window.innerHeight - safeArea().bottom - (legacyMode ? 30 : pad);
+  const bounds = arenaBounds();
   // Only ever undo the player's own offset, so default layouts are never pushed around.
-  if (rect.right > viewRight && arena.x > 0) arena.x -= Math.min(arena.x, rect.right - viewRight);
-  if (rect.left < pad && arena.x < 0) arena.x += Math.min(-arena.x, pad - rect.left);
-  if (rect.bottom > viewBottom && arena.y > 0) arena.y -= Math.min(arena.y, rect.bottom - viewBottom);
+  if (rect.right > bounds.right && arena.x > 0) arena.x -= Math.min(arena.x, rect.right - bounds.right);
+  if (rect.left < bounds.left && arena.x < 0) arena.x += Math.min(-arena.x, bounds.left - rect.left);
+  if (rect.bottom > bounds.bottom && arena.y > 0) arena.y -= Math.min(arena.y, rect.bottom - bounds.bottom);
   // Modern: keep the play area below the button bar it no longer moves with.
-  const minTop = legacyMode ? pad : document.querySelector('.game-header').getBoundingClientRect().bottom + 16;
-  if (rect.top < minTop && arena.y < 0) arena.y += Math.min(-arena.y, minTop - rect.top);
+  if (rect.top < bounds.top && arena.y < 0) arena.y += Math.min(-arena.y, bounds.top - rect.top);
   applyArena();
   if (save) saveArena();
 }
@@ -1046,7 +1105,6 @@ function renderSongPicker(message = '', ok = false) {
   else if (info.kind === 'file') current.textContent = `Your file: ${info.name}`;
   else current.textContent = 'YouTube video (needs an internet connection)';
   document.querySelector('#song-link').value = info && info.kind === 'youtube' ? info.url : '';
-  document.querySelector('#song-reset').disabled = !info;
   const error = document.querySelector('#song-error');
   error.textContent = message || songErrors[look] || '';
   error.classList.toggle('ok', ok);

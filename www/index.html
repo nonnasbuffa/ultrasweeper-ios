@@ -221,13 +221,14 @@
           <div class="song-buttons">
             <input id="song-file" type="file" accept="audio/*,.mp3" hidden />
             <button id="song-file-pick" class="upload-button" type="button">Choose MP3 file</button>
-            <button id="song-reset" class="reset-accent" type="button">Use built-in tune</button>
           </div>
           <p id="song-error" class="form-error song-error" role="alert"></p>
         </section>
         <div id="asset-list" class="asset-list"></div>
         <p id="asset-error" class="form-error" role="alert"></p>
-        <button id="restore-assets" class="secondary-button" type="button">Restore default assets</button>
+        <div class="settings-footer">
+          <button id="restore-assets" class="secondary-button" type="button">Restore default assets</button>
+        </div>
       </div>
     </section>
     <script src="music.js"></script>

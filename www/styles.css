@@ -600,7 +600,12 @@ body.legacy-mode .asset-preview { width: 32px; height: 32px; }
 body.legacy-mode .asset-name { color: #000; font-size: 12px; }
 body.legacy-mode .asset-hint { color: #555; font-size: 11px; }
 body.legacy-mode #asset-error { padding-bottom: 4px; }
-body.legacy-mode #restore-assets { display: block; margin: 0 14px 0 auto; }
+/* Restore button: bottom-left like the modern look, in a footer pinned to the bottom of the window so it is never cut off. */
+body.legacy-mode .settings-card > .settings-footer { position: sticky; z-index: 1; bottom: 0; margin: 0; padding: 8px 14px 12px; border-top: 1px solid #d0d0bf; background: var(--xp-face, #ece9d8); }
+body.legacy-mode .settings-card::after { display: none; }
+body.legacy-mode #restore-assets { display: block; margin: 0; }
+/* Music note at the right end of the menu bar, under the close button. */
+body.legacy-mode .game-actions .music-button { order: 10; }
 
 /* ---------- Taskbar ---------- */
 body.legacy-mode .xp-taskbar {
@@ -953,6 +958,14 @@ body.legacy-mode .music-toggle .admin-toggle-icon { color: #1b5fc1; }
 body.legacy-mode .music-toggle[aria-pressed="false"] .admin-toggle-icon { color: #777; }
 .game-screen .game-header .music-button .button-icon { display: block; }
 .legacy-toggle, .offline-badge { white-space: nowrap; }
+
+/* Centre guides shown while the game window is snapped to the middle of the screen. */
+.snap-guide { position: fixed; z-index: 30; opacity: 0; pointer-events: none; transition: opacity .12s ease; }
+.snap-guide.visible { opacity: 1; }
+.snap-guide.vertical { width: 0; border-left: 1px dashed var(--accent); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent); }
+.snap-guide.horizontal { left: 0; right: 0; height: 0; border-top: 1px dashed var(--accent); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent); }
+body.legacy-mode .snap-guide.vertical { border-left: 2px dashed #ff2d95; box-shadow: 0 0 0 1px #ffffff55; }
+body.legacy-mode .snap-guide.horizontal { border-top: 2px dashed #ff2d95; box-shadow: 0 0 0 1px #ffffff55; }
 
 /* Custom song picker (Appearance) */
 .song-picker { display: grid; gap: 10px; margin: 0 0 16px; padding: 15px; border: 1px solid #303a4b; border-radius: 13px; background: #151b24; }
