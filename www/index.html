@@ -41,12 +41,14 @@
       <section id="mode-screen" class="screen mode-screen" aria-labelledby="mode-title">
         <div class="xp-titlebar" aria-hidden="true"><img src="assets/mine.svg" alt="" /><span>UltraSweeper</span></div>
         <header class="menu-header">
-          <span class="brand"><i></i>UltraSweeper</span>
-          <div class="menu-header-actions">
-            <button id="menu-stats" class="legacy-toggle stats-toggle" type="button"><svg class="admin-toggle-icon"><use href="#icon-trophy" /></svg><span>Stats</span></button>
+          <div class="menu-header-start">
+            <span class="brand"><i></i>UltraSweeper</span>
             <button id="admin-toggle" class="legacy-toggle admin-toggle hidden" type="button" aria-pressed="false">
               <svg class="admin-toggle-icon"><use href="#icon-shield" /></svg><span>Admin</span><b>Locked</b>
             </button>
+          </div>
+          <div class="menu-header-actions">
+            <button id="menu-stats" class="legacy-toggle stats-toggle icon-toggle" type="button" aria-label="Stats" title="Stats"><svg class="admin-toggle-icon"><use href="#icon-trophy" /></svg></button>
             <button id="music-toggle" class="legacy-toggle music-toggle" type="button" aria-pressed="true">
               <svg class="admin-toggle-icon"><use href="#icon-music" /></svg><span>Music</span><b>On</b>
             </button>
@@ -92,8 +94,8 @@
           <button id="back-to-menu" class="text-button" type="button"><svg class="button-icon"><use href="#icon-arrow-left" /></svg>Games</button>
           <div class="game-actions">
             <button id="open-admin" class="text-button admin-tools-button hidden" type="button" aria-haspopup="dialog" aria-expanded="false" title="Admin tools"><svg class="button-icon"><use href="#icon-hammer" /></svg>Admin</button>
-            <button id="game-music" class="text-button music-button" type="button" aria-pressed="true" aria-label="Music" title="Music on"><svg class="button-icon"><use href="#icon-music" /></svg></button>
-            <button id="open-stats" class="text-button" type="button"><svg class="button-icon"><use href="#icon-trophy" /></svg>Stats</button>
+            <button id="game-music" class="text-button icon-button music-button" type="button" aria-pressed="true" aria-label="Music" title="Music on"><svg class="button-icon"><use href="#icon-music" /></svg></button>
+            <button id="open-stats" class="text-button icon-button stats-button" type="button" aria-label="Stats" title="Stats"><svg class="button-icon"><use href="#icon-trophy" /></svg></button>
             <button id="open-settings" class="text-button" type="button"><svg class="button-icon"><use href="#icon-palette" /></svg>Appearance</button>
           </div>
         </header>

@@ -958,7 +958,17 @@ body.legacy-mode .admin-panel-titlebar { cursor: move; }
 .music-toggle[aria-pressed="false"] .admin-toggle-icon, .music-button[aria-pressed="false"] { color: #7d8898; }
 body.legacy-mode .music-toggle .admin-toggle-icon { color: #1b5fc1; }
 body.legacy-mode .music-toggle[aria-pressed="false"] .admin-toggle-icon { color: #777; }
-.game-screen .game-header .music-button .button-icon { display: block; }
+.game-screen .game-header .icon-button .button-icon { display: block; }
+.icon-button .button-icon { width: 19px; height: 19px; }
+.stats-button { color: #f0c46a; }
+body.legacy-mode .stats-button { color: #a06a00; }
+
+/* Menu bar: logo and Admin badge on the left, icon buttons and switches on the right. */
+.menu-header-start { display: flex; align-items: center; gap: 14px; min-width: 0; }
+body.legacy-mode .menu-header { justify-content: space-between; }
+.icon-toggle { padding: 6px 10px; }
+.icon-toggle .admin-toggle-icon { width: 16px; height: 16px; }
+body.legacy-mode .icon-toggle { padding: 3px 9px; }
 .legacy-toggle, .offline-badge { white-space: nowrap; }
 
 /* Centre guides shown while the game window is snapped to the middle of the screen. */
