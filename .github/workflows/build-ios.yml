@@ -1,7 +1,7 @@
-# Builds an unsigned UltraSweeper.ipa on a GitHub-hosted Intel Mac (they usually have shorter queues than the Apple silicon ones).
-# Sign/install it afterwards with your own tool (Sideloadly, ESign, AltStore, ...).
-# Every push to main keeps the IPA as a downloadable artifact; pushing a version tag
-# (for example v1.0.4) also publishes it as a Release.
+# Builds unsigned UltraSweeper.ipa and UltraSweeper-Lite.ipa on a GitHub-hosted Intel Mac (they usually have shorter queues than the Apple silicon ones).
+# Sign/install them afterwards with your own tool (Sideloadly, ESign, AltStore, ...).
+# Every push to main keeps the IPAs as downloadable artifacts; pushing a version tag
+# (for example v1.0.4) also publishes them as a Release.
 name: Build UltraSweeper IPA
 
 on:
@@ -49,16 +49,44 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/App.app Payload/
           zip -qry UltraSweeper.ipa Payload
 
+      # UltraSweeper Lite: the same app with Lite's index.html, and its own bundle id and name so both can be installed.
+      - name: Build UltraSweeper Lite (unsigned)
+        run: |
+          cp www-lite/index.html www/index.html
+          npx cap copy ios
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build-lite \
+            PRODUCT_BUNDLE_IDENTIFIER=com.offlineminesweeper.app.lite \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName UltraSweeper Lite" build-lite/Build/Products/Release-iphoneos/App.app/Info.plist
+
+      - name: Package UltraSweeper-Lite.ipa
+        run: |
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R build-lite/Build/Products/Release-iphoneos/App.app Payload/
+          zip -qry UltraSweeper-Lite.ipa Payload
+
       - uses: actions/upload-artifact@v4
         with:
           name: UltraSweeper-ipa
-          path: UltraSweeper.ipa
+          path: |
+            UltraSweeper.ipa
+            UltraSweeper-Lite.ipa
 
       - name: Publish the Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" UltraSweeper.ipa \
+          gh release create "$GITHUB_REF_NAME" UltraSweeper.ipa UltraSweeper-Lite.ipa \
             --title "UltraSweeper ${GITHUB_REF_NAME#v} for iPhone" \
-            --notes "Download **UltraSweeper.ipa** below. It's unsigned: sign and install it with your own tool (Sideloadly, ESign, AltStore...)."
+            --notes "Download **UltraSweeper.ipa**, or **UltraSweeper-Lite.ipa** for the classic-look version made for older iPhones. They're unsigned: sign and install them with your own tool (Sideloadly, ESign, AltStore...)."
