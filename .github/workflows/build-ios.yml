@@ -53,6 +53,8 @@ jobs:
       - name: Build UltraSweeper Lite (unsigned)
         run: |
           cp www-lite/index.html www/index.html
+          cp ios-lite/AppIcon-512@2x.png ios/App/App/Assets.xcassets/AppIcon.appiconset/
+          cp ios-lite/splash-*.png ios/App/App/Assets.xcassets/Splash.imageset/
           npx cap copy ios
           xcodebuild \
             -project ios/App/App.xcodeproj \

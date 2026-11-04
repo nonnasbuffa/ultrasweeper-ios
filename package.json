@@ -1,6 +1,6 @@
 {
   "name": "offline-minesweeper-mobile",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "private": true,
   "description": "UltraSweeper for Android and iOS (Capacitor wrapper around the desktop game).",
   "scripts": {
